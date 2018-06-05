@@ -90,6 +90,7 @@ class ManagerWidget(QWidget):
         self.updateTable()
 
     def updateTable(self):
+        scrollValue = self.sequenceTable.verticalScrollBar().value()
         self.sequenceTable.hide()
         self.sequenceTable.close()
         self.sequenceTable.deleteLater()
@@ -97,6 +98,7 @@ class ManagerWidget(QWidget):
 
         self.sequenceTable = Table(self)
         self.mainLayout.addWidget(self.sequenceTable, 1, 0, 10, 10)
+        self.sequenceTable.verticalScrollBar().setValue(scrollValue)
 
     def sendCmdLine(self):
 
