@@ -1,9 +1,13 @@
 __author__ = 'alefur'
 from datetime import datetime as dt
+import os
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QTextCursor
-from PyQt5.QtWidgets import QPlainTextEdit, QLabel, QComboBox, QLineEdit, QProgressBar
+from PyQt5.QtGui import QFont, QTextCursor, QIcon, QPixmap
+from PyQt5.QtWidgets import QPlainTextEdit, QLabel, QComboBox, QLineEdit, QProgressBar, QPushButton
+import sequenceManager as seqman
+
+imgpath = os.path.abspath(os.path.join(os.path.dirname(seqman.__file__), '../..', 'img'))
 
 
 class Label(QLabel):
@@ -40,6 +44,7 @@ class CLabel(QLabel):
               "WAITING": ('blue', 'white'),
               "PROCESSING": ('green', 'white')
               }
+
     def __init__(self, txt):
         QLabel.__init__(self)
         self.setText(txt=txt)
@@ -94,3 +99,32 @@ class ProgressBar(QProgressBar):
     def __init__(self, *args, **kwargs):
         QProgressBar.__init__(self, *args, **kwargs)
         self.setStyleSheet("QProgressBar { font: 8pt;}")
+
+
+class IconButton(QPushButton):
+    def __init__(self, iconFile):
+        QPushButton.__init__(self)
+        pix = QPixmap()
+        pix.load('%s/%s' % (imgpath, iconFile))
+        icon = QIcon(pix)
+        self.setIcon(icon)
+
+
+class EyeButton(QPushButton):
+    def __init__(self):
+        QPushButton.__init__(self)
+        pixon = QPixmap()
+        pixon.load('%s/%s' % (imgpath, 'eye_on.png'))
+        self.icon_on = QIcon(pixon)
+
+        pixon = QPixmap()
+        pixon.load('%s/%s' % (imgpath, 'eye_off.png'))
+        self.icon_off = QIcon(pixon)
+
+        self.setState(False)
+        self.setEnabled(False)
+
+    def setState(self, state):
+        icon = self.icon_on if not state else self.icon_off
+        self.setIcon(icon)
+        self.state = state
