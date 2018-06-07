@@ -1,11 +1,35 @@
 __author__ = 'alefur'
-import os
 
-import sequenceManager as seqman
-from PyQt5.QtGui import QIcon, QPixmap
+from functools import partial
+
 from PyQt5.QtWidgets import QCheckBox, QPushButton
 
-imgpath = os.path.abspath(os.path.join(os.path.dirname(seqman.__file__), '../..', 'img'))
+from sequenceManager.widgets import IconButton, EyeButton
+
+
+class SubCommand(object):
+    def __init__(self, id, cmdStr):
+        self.id = id
+        self.cmdStr = cmdStr
+        self.visitStart = -1
+        self.visitEnd = -1
+        self.anomalies = ''
+        self.status = 'init'
+        if id == 0:
+            self.setActive()
+
+    @property
+    def isFinished(self):
+        return self.status == 'finished'
+
+    def setFinished(self):
+        self.status = 'finished'
+
+    def setFailed(self):
+        self.status = 'failed'
+
+    def setActive(self):
+        self.status = 'active'
 
 
 class ExperimentRow(object):
@@ -23,34 +47,23 @@ class ExperimentRow(object):
         self.visitStart = -1
         self.visitEnd = -1
         self.anomalies = ''
+        self.subcommands = []
 
         self.valid = QCheckBox()
         self.valid.stateChanged.connect(self.setValid)
         self.colorCheckbox()
 
-        pixUp = QPixmap()
-        pixUp.load('%s/%s' % (imgpath, 'arrow_up2.png'))
-        iconUp = QIcon(pixUp)
-
-        self.buttonMoveUp = QPushButton()
-        self.buttonMoveUp.setIcon(iconUp)
+        self.buttonMoveUp = IconButton(iconFile='arrow_up2.png')
         self.buttonMoveUp.clicked.connect(self.moveUp)
 
-        pixDown = QPixmap()
-        pixDown.load('%s/%s' % (imgpath, 'arrow_down2.png'))
-        iconDown = QIcon(pixDown)
-
-        self.buttonMoveDown = QPushButton()
-        self.buttonMoveDown.setIcon(iconDown)
+        self.buttonMoveDown = IconButton(iconFile='arrow_down2.png')
         self.buttonMoveDown.clicked.connect(self.moveDown)
 
-        pixDelete = QPixmap()
-        pixDelete.load('%s/%s' % (imgpath, 'delete.png'))
-        iconDelete = QIcon(pixDelete)
-
-        self.buttonDelete = QPushButton()
-        self.buttonDelete.setIcon(iconDelete)
+        self.buttonDelete = IconButton(iconFile='delete.png')
         self.buttonDelete.clicked.connect(self.remove)
+
+        self.buttonEye = EyeButton()
+        self.buttonEye.clicked.connect(partial(self.showSubcommands))
 
     @property
     def kwargs(self):
@@ -63,6 +76,10 @@ class ExperimentRow(object):
     @property
     def isActive(self):
         return self.status == 'active'
+
+    @property
+    def showSub(self):
+        return self.buttonEye.state
 
     def colorCheckbox(self):
         self.valid.setStyleSheet("QCheckBox {background-color:%s};" % ExperimentRow.color[self.status][0])
@@ -78,37 +95,76 @@ class ExperimentRow(object):
         self.mwindow.sendCommand(fullCmd=self.cmdStr,
                                  callFunc=self.handleResult)
 
-    # def delayedCommand(self, fullCmd, callFunc, delay):
-    #
-    #     QTimer.singleShot(delay, partial(self.sendCommand, fullCmd, callFunc))
-    #
-    # def sendCommand(self, fullCmd, callFunc):
-    #     if self.mwindow.onGoing:
-    #         self.mwindow.sendCommand(fullCmd=fullCmd,
-    #                                  callFunc=callFunc)
-    #     else:
-    #         self.setValid(state=2)
-
     def setFinished(self):
+        self.valid.setEnabled(False)
         self.setStatus(status='finished')
 
     def setFailed(self):
+        self.valid.setEnabled(False)
+        self.cleanupSubCommand()
         self.setStatus(status='failed')
 
     def setValid(self, state):
         status = "valid" if state == 2 else "init"
         self.setStatus(status=status)
 
+    def showSubcommands(self):
+        self.buttonEye.setState(state=not self.buttonEye.state)
+        self.mwindow.updateTable()
+
     def handleResult(self, resp):
         reply = resp.replyList[-1]
         code = resp.lastCode
-        if code == ':':
+
+        if code == 'I':
+            self.updateInfo(reply, fail=False)
+        elif code == 'W':
+            self.updateInfo(reply, fail=True)
+        elif code == ':':
             self.setFinished()
+            self.mwindow.sequencer.nextPlease()
         elif code == 'F':
             self.setFailed()
+            self.mwindow.sequencer.nextPlease()
 
         self.mwindow.printResponse(resp=resp)
-        self.mwindow.sequencer.nextPlease()
+
+    def updateInfo(self, reply, fail):
+        if 'newExperiment' in reply.keywords:
+            self.addSubCommand(*reply.keywords['newExperiment'].values)
+        if 'subCommand' in reply.keywords:
+            self.updateSubCommandStatus(fail, *reply.keywords['subCommand'].values)
+
+    def updateSubCommandStatus(self, fail, id, returnStr=''):
+        id = int(id)
+        subcommand = self.subcommands[id]
+
+        if fail:
+            subcommand.setFailed()
+            subcommand.anomalies = returnStr
+        else:
+            subcommand.setFinished()
+
+        try:
+            self.subcommands[id + 1].setActive()
+        except IndexError:
+            pass
+
+        self.mwindow.updateTable()
+
+    def addSubCommand(self, experimentId, cmdList):
+
+        self.id = experimentId
+        self.subcommands = [SubCommand(id=i, cmdStr=cmdStr) for i, cmdStr in enumerate(cmdList.split(';'))]
+        self.buttonEye.setEnabled(True)
+
+        self.mwindow.updateTable()
+
+    def cleanupSubCommand(self):
+        for subcommand in self.subcommands:
+            if not subcommand.isFinished:
+                subcommand.setFailed()
+
 
     def moveUp(self):
         experiments = self.mwindow.experiments

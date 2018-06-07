@@ -33,44 +33,64 @@ class Table(QTableWidget):
         self.mwindow = mwindow
         self.controlKey = False
 
-        colnames = ['', '', ' Id ', '  Valid  ', '  Type  ', '  Name  ', '  Comments  ', ' CmdStr ', '  VisitStart  ',
+        colnames = ['', '', '', ' Id ', '  Valid  ', '  Type  ', '  Name  ', '  Comments  ', ' CmdStr ',
+                    '  VisitStart  ',
                     '  VisitEnd  ', '  Anomalies  ']
 
-        QTableWidget.__init__(self, len(self.mwindow.experiments) * 2, len(colnames))
+        allRows = [len(experiment.subcommands) if (experiment.showSub and experiment.subcommands) else 2 for experiment in self.experiments]
+
+        QTableWidget.__init__(self, sum(allRows), len(colnames))
 
         self.setHorizontalHeaderLabels(colnames)
 
         self.verticalHeader().setDefaultSectionSize(6)
         self.verticalHeader().hide()
 
-        for i, experiment in enumerate(self.experiments):
-            self.setCellWidget(2 * i, 0, experiment.buttonDelete)
-            self.setCellWidget(2 * i, 1, experiment.buttonMoveUp)
-            self.setCellWidget(2 * i + 1, 1, experiment.buttonMoveDown)
+        rowNumber = 0
+        for experiment in self.experiments:
+            self.setRowHeight(rowNumber, 14)
+            self.setRowHeight(rowNumber + 1, 14)
 
-            self.setItem(2 * i, 2, CenteredItem(experiment, 'id', int, lock=True))
-            self.setCellWidget(2 * i, 3, experiment.valid)
-            self.setItem(2 * i, 4, CenteredItem(experiment, 'type', str, lock=True))
-            self.setItem(2 * i, 5, CenteredItem(experiment, 'name', str))
-            self.setItem(2 * i, 6, CenteredItem(experiment, 'comments', str))
-            self.setItem(2 * i, 7, CenteredItem(experiment, 'cmdStr', str))
-            self.setItem(2 * i, 8, CenteredItem(experiment, 'visitStart', int, lock=True))
-            self.setItem(2 * i, 9, CenteredItem(experiment, 'visitEnd', int, lock=True))
-            self.setItem(2 * i, 10, CenteredItem(experiment, 'anomalies', str))
+            self.setCellWidget(rowNumber, 0, experiment.buttonDelete)
+            self.setCellWidget(rowNumber, 1, experiment.buttonMoveUp)
+            self.setCellWidget(rowNumber + 1, 1, experiment.buttonMoveDown)
+            self.setCellWidget(rowNumber, 2, experiment.buttonEye)
+            self.setItem(rowNumber, 3, CenteredItem(experiment, 'id', int, lock=True))
+            self.setCellWidget(rowNumber, 4, experiment.valid)
+            self.setItem(rowNumber, 5, CenteredItem(experiment, 'type', str, lock=True))
+            self.setItem(rowNumber, 6, CenteredItem(experiment, 'name', str))
+            self.setItem(rowNumber, 7, CenteredItem(experiment, 'comments', str))
 
-            self.setRowHeight(2 * i + 1, 14)
-            self.setRowHeight(2 * i, 14)
+            nb = 2
+            if experiment.showSub and experiment.subcommands:
+                span = len(experiment.subcommands)
+                cols = [0, 2, 3, 4, 5, 6, 7]
+                for nb, subcommand in enumerate(experiment.subcommands):
+                    self.setRowHeight(rowNumber + nb, 16)
+                    self.setItem(rowNumber + nb, 8, CenteredItem(subcommand, 'cmdStr', str))
+                    self.setItem(rowNumber + nb, 9, CenteredItem(subcommand, 'visitStart', int, lock=True))
+                    self.setItem(rowNumber + nb, 10, CenteredItem(subcommand, 'visitEnd', int, lock=True))
+                    self.setItem(rowNumber + nb, 11, CenteredItem(subcommand, 'anomalies', str))
+                nb += 1
+
+            else:
+                span = 2
+                cols = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                self.setItem(rowNumber, 8, CenteredItem(experiment, 'cmdStr', str))
+                self.setItem(rowNumber, 9, CenteredItem(experiment, 'visitStart', int, lock=True))
+                self.setItem(rowNumber, 10, CenteredItem(experiment, 'visitEnd', int, lock=True))
+                self.setItem(rowNumber, 11, CenteredItem(experiment, 'anomalies', str))
+
+            for col in cols:
+                self.setSpan(rowNumber, col, span, 1)
+
+            rowNumber += nb
 
             for j in range(len(colnames)):
-                if j == 3:
+                if j == 4:
                     self.setColumnWidth(j, 40)
                 else:
                     self.resizeColumnToContents(j)
-
-                if j == 1:
-                    continue
-
-                self.setSpan(2 * i, j, 2, 1)
 
         self.cellChanged.connect(self.userCellChange)
         self.setFont(self.getFont())
