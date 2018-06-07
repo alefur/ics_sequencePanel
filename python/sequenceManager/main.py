@@ -53,7 +53,7 @@ def main():
 
     import miniActor
 
-    actor = miniActor.connectActor(['hub'])
+    actor = miniActor.connectActor(['hub', 'spsait'])
 
     try:
         ex = SequenceManager(reactor,
