@@ -37,10 +37,10 @@ class ManagerWidget(QWidget):
         self.logLayout.addWidget(self.commandLine, 10, 0, 1, 1)
 
         self.mainLayout.addWidget(self.menuBar, 0, 0, 1, 10)
-        self.mainLayout.addWidget(self.sequenceTable, 1, 0, 10, 10)
-        self.mainLayout.addLayout(self.sequencer, 11, 0, 4, 4)
+        self.mainLayout.addWidget(self.sequenceTable, 1, 0, 35, 10)
+        self.mainLayout.addLayout(self.sequencer, 36, 0, 4, 4)
 
-        self.mainLayout.addLayout(self.logLayout, 15, 0, 10, 10)
+        self.mainLayout.addLayout(self.logLayout, 40, 0, 25, 10)
 
         self.setMinimumWidth(920)
         self.setLayout(self.mainLayout)
@@ -97,7 +97,7 @@ class ManagerWidget(QWidget):
         self.mainLayout.removeWidget(self.sequenceTable)
 
         self.sequenceTable = Table(self)
-        self.mainLayout.addWidget(self.sequenceTable, 1, 0, 10, 10)
+        self.mainLayout.addWidget(self.sequenceTable, 1, 0, 35, 10)
         self.sequenceTable.verticalScrollBar().setValue(scrollValue)
 
     def sendCmdLine(self):
@@ -113,7 +113,6 @@ class ManagerWidget(QWidget):
         self.logArea.newLine('cmdIn=%s %s' % (actor, cmdStr))
         self.actor.cmdr.bgCall(**dict(actor=actor,
                                       cmdStr=cmdStr,
-                                      timeLim=600,
                                       callFunc=callFunc,
                                       callCodes=keyvar.AllCodes))
 
