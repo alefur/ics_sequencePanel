@@ -53,6 +53,7 @@ class DelayBar(QProgressBar):
 
 
 class Sequencer(QGridLayout):
+    delayCmd = 2
     def __init__(self, mwindow):
         self.mwindow = mwindow
         QGridLayout.__init__(self)
@@ -96,7 +97,7 @@ class Sequencer(QGridLayout):
         self.stopButton.setVisible(True)
 
         delay = self.delay.value() * 60
-        delay = 5 if not delay else delay
+        delay = Sequencer.delayCmd if not delay else delay
 
         self.startingSoon(delay=delay)
 
@@ -127,7 +128,7 @@ class Sequencer(QGridLayout):
 
     def nextPlease(self):
         if self.onGoing:
-            self.startingSoon(delay=5)
+            self.startingSoon(delay=Sequencer.delayCmd)
 
     def abortSequence(self):
         pass
