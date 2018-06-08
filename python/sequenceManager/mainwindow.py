@@ -104,7 +104,7 @@ class ManagerWidget(QWidget):
 
         self.sendCommand(fullCmd=self.commandLine.text())
 
-    def sendCommand(self, fullCmd, callFunc=None):
+    def sendCommand(self, fullCmd, timeLim=300, callFunc=None):
 
         callFunc = self.printResponse if callFunc is None else callFunc
         import opscore.actor.keyvar as keyvar
@@ -113,6 +113,7 @@ class ManagerWidget(QWidget):
         self.logArea.newLine('cmdIn=%s %s' % (actor, cmdStr))
         self.actor.cmdr.bgCall(**dict(actor=actor,
                                       cmdStr=cmdStr,
+                                      timeLim=timeLim,
                                       callFunc=callFunc,
                                       callCodes=keyvar.AllCodes))
 
