@@ -14,7 +14,7 @@ class SubCommand(object):
         self.visitStart = -1
         self.visitEnd = -1
         self.anomalies = ''
-        self.status = 'init'
+        self.status = 'valid'
         if id == 0:
             self.setActive()
 
@@ -81,6 +81,13 @@ class ExperimentRow(object):
     def showSub(self):
         return self.buttonEye.state
 
+    @property
+    def nbRows(self):
+
+        nbRows = len(self.subcommands) if (self.showSub and self.subcommands) else 2
+        nbRows = 2 if nbRows < 2 else nbRows
+        return nbRows
+
     def colorCheckbox(self):
         self.valid.setStyleSheet("QCheckBox {background-color:%s};" % ExperimentRow.color[self.status][0])
 
@@ -92,7 +99,10 @@ class ExperimentRow(object):
 
     def setActive(self):
         self.setStatus(status='active')
-        self.mwindow.sendCommand(fullCmd=self.cmdStr,
+        name = 'name="%s"' % self.name if self.name else ''
+        comments = 'comments="%s"' % self.comments if self.comments else ''
+        self.mwindow.sendCommand(fullCmd='%s %s %s' % (self.cmdStr, name, comments),
+                                 timeLim=7 * 24 * 3600,
                                  callFunc=self.handleResult)
 
     def setFinished(self):
@@ -130,6 +140,7 @@ class ExperimentRow(object):
         self.mwindow.printResponse(resp=resp)
 
     def updateInfo(self, reply, fail):
+
         if 'newExperiment' in reply.keywords:
             self.addSubCommand(*reply.keywords['newExperiment'].values)
         if 'subCommand' in reply.keywords:
@@ -152,9 +163,12 @@ class ExperimentRow(object):
 
         self.mwindow.updateTable()
 
-    def addSubCommand(self, experimentId, cmdList):
+    def addSubCommand(self, experimentId, exptype, name, comments, cmdList):
 
         self.id = experimentId
+        self.type = exptype.capitalize()
+        self.name = name
+        self.comments = comments
         self.subcommands = [SubCommand(id=i, cmdStr=cmdStr) for i, cmdStr in enumerate(cmdList.split(';'))]
         self.buttonEye.setEnabled(True)
 
@@ -164,7 +178,6 @@ class ExperimentRow(object):
         for subcommand in self.subcommands:
             if not subcommand.isFinished:
                 subcommand.setFailed()
-
 
     def moveUp(self):
         experiments = self.mwindow.experiments
