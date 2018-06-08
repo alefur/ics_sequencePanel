@@ -131,4 +131,4 @@ class Sequencer(QGridLayout):
             self.startingSoon(delay=Sequencer.delayCmd)
 
     def abortSequence(self):
-        pass
+        self.mwindow.sendCommand(fullCmd='spsait abort', timeLim=5)
