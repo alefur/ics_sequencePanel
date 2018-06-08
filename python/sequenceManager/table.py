@@ -37,9 +37,9 @@ class Table(QTableWidget):
                     '  VisitStart  ',
                     '  VisitEnd  ', '  Anomalies  ']
 
-        allRows = [len(experiment.subcommands) if (experiment.showSub and experiment.subcommands) else 2 for experiment in self.experiments]
+        nbRows = sum([experiment.nbRows for experiment in self.experiments])
 
-        QTableWidget.__init__(self, sum(allRows), len(colnames))
+        QTableWidget.__init__(self, nbRows, len(colnames))
 
         self.setHorizontalHeaderLabels(colnames)
 
@@ -63,15 +63,24 @@ class Table(QTableWidget):
 
             nb = 2
             if experiment.showSub and experiment.subcommands:
-                span = len(experiment.subcommands)
-                cols = [0, 2, 3, 4, 5, 6, 7]
-                for nb, subcommand in enumerate(experiment.subcommands):
-                    self.setRowHeight(rowNumber + nb, 16)
-                    self.setItem(rowNumber + nb, 8, CenteredItem(subcommand, 'cmdStr', str))
-                    self.setItem(rowNumber + nb, 9, CenteredItem(subcommand, 'visitStart', int, lock=True))
-                    self.setItem(rowNumber + nb, 10, CenteredItem(subcommand, 'visitEnd', int, lock=True))
-                    self.setItem(rowNumber + nb, 11, CenteredItem(subcommand, 'anomalies', str))
-                nb += 1
+                if len(experiment.subcommands) > 1:
+                    span = len(experiment.subcommands)
+                    cols = [0, 2, 3, 4, 5, 6, 7]
+                    for nb, subcommand in enumerate(experiment.subcommands):
+                        self.setRowHeight(rowNumber + nb, 16)
+                        self.setItem(rowNumber + nb, 8, CenteredItem(subcommand, 'cmdStr', str))
+                        self.setItem(rowNumber + nb, 9, CenteredItem(subcommand, 'visitStart', int, lock=True))
+                        self.setItem(rowNumber + nb, 10, CenteredItem(subcommand, 'visitEnd', int, lock=True))
+                        self.setItem(rowNumber + nb, 11, CenteredItem(subcommand, 'anomalies', str))
+                    nb += 1
+                else:
+                    subcommand = experiment.subcommands[0]
+                    span = 2
+                    cols = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                    self.setItem(rowNumber, 8, CenteredItem(subcommand, 'cmdStr', str))
+                    self.setItem(rowNumber, 9, CenteredItem(subcommand, 'visitStart', int, lock=True))
+                    self.setItem(rowNumber, 10, CenteredItem(subcommand, 'visitEnd', int, lock=True))
+                    self.setItem(rowNumber, 11, CenteredItem(subcommand, 'anomalies', str))
 
             else:
                 span = 2
