@@ -11,8 +11,8 @@ class SubCommand(object):
     def __init__(self, id, cmdStr):
         self.id = id
         self.cmdStr = cmdStr
-        self.visitStart = -1
-        self.visitEnd = -1
+        self.visits = []
+
         self.anomalies = ''
         self.status = 'valid'
         if id == 0:
@@ -22,6 +22,20 @@ class SubCommand(object):
     def isFinished(self):
         return self.status == 'finished'
 
+    @property
+    def visitStart(self):
+        if not self.visits:
+            return -1
+
+        return min(self.visits)
+
+    @property
+    def visitEnd(self):
+        if not self.visits:
+            return -1
+
+        return max(self.visits)
+
     def setFinished(self):
         self.status = 'finished'
 
@@ -30,6 +44,10 @@ class SubCommand(object):
 
     def setActive(self):
         self.status = 'active'
+
+    def addVisits(self, newVisits):
+        newVisits = [int(visit) for visit in newVisits]
+        self.visits.extend(newVisits)
 
 
 class ExperimentRow(object):
@@ -44,8 +62,6 @@ class ExperimentRow(object):
         self.name = name
         self.comments = comments
         self.cmdStr = cmdStr
-        self.visitStart = -1
-        self.visitEnd = -1
         self.anomalies = ''
         self.subcommands = []
 
@@ -88,6 +104,26 @@ class ExperimentRow(object):
         nbRows = 2 if nbRows < 2 else nbRows
         return nbRows
 
+    @property
+    def visitStart(self):
+        visits = [subcommand.visitStart for subcommand in self.subcommands if subcommand.visitStart != -1]
+        if not visits:
+            return -1
+
+        return min(visits)
+
+    @property
+    def visitEnd(self):
+        visits = [subcommand.visitEnd for subcommand in self.subcommands if subcommand.visitEnd != -1]
+        if not visits:
+            return -1
+
+        return max(visits)
+
+    @property
+    def registered(self):
+        return not self.id == -1
+
     def colorCheckbox(self):
         self.valid.setStyleSheet("QCheckBox {background-color:%s};" % ExperimentRow.color[self.status][0])
 
@@ -99,8 +135,10 @@ class ExperimentRow(object):
 
     def setActive(self):
         self.setStatus(status='active')
-        name = 'name="%s"' % self.name if self.name else ''
-        comments = 'comments="%s"' % self.comments if self.comments else ''
+
+        name = 'name="%s"' % self.name.replace('"', "") if self.name else ''
+        comments = 'comments="%s"' % self.comments.replace('"', "") if self.comments else ''
+
         self.mwindow.sendCommand(fullCmd='%s %s %s' % (self.cmdStr, name, comments),
                                  timeLim=7 * 24 * 3600,
                                  callFunc=self.handleResult)
@@ -130,23 +168,36 @@ class ExperimentRow(object):
             self.updateInfo(reply, fail=False)
         elif code == 'W':
             self.updateInfo(reply, fail=True)
-        elif code == ':':
-            self.setFinished()
-            self.mwindow.sequencer.nextPlease()
-        elif code == 'F':
-            self.setFailed()
-            self.mwindow.sequencer.nextPlease()
+        elif code in [':', 'F']:
+            self.terminate(code=code)
 
         self.mwindow.printResponse(resp=resp)
 
     def updateInfo(self, reply, fail):
 
         if 'newExperiment' in reply.keywords:
-            self.addSubCommand(*reply.keywords['newExperiment'].values)
-        if 'subCommand' in reply.keywords:
-            self.updateSubCommandStatus(fail, *reply.keywords['subCommand'].values)
+            self.setExperiment(*reply.keywords['newExperiment'].values)
 
-    def updateSubCommandStatus(self, fail, id, returnStr=''):
+        if 'subCommand' in reply.keywords:
+            self.updateSubCommand(fail, *reply.keywords['subCommand'].values)
+
+    def terminate(self, code):
+        self.setFinished() if code == ':' else self.setFailed()
+
+        self.mwindow.sequencer.nextPlease()
+
+    def setExperiment(self, experimentId, exptype, name, comments, cmdList):
+
+        self.id = int(experimentId)
+        self.type = exptype.capitalize()
+        self.name = name
+        self.comments = comments
+        self.subcommands = [SubCommand(id=i, cmdStr=cmdStr) for i, cmdStr in enumerate(cmdList.split(';'))]
+        self.buttonEye.setEnabled(True)
+
+        self.mwindow.updateTable()
+
+    def updateSubCommand(self, fail, id, returnStr=''):
         id = int(id)
         subcommand = self.subcommands[id]
 
@@ -154,23 +205,15 @@ class ExperimentRow(object):
             subcommand.setFailed()
             subcommand.anomalies = returnStr
         else:
+            if returnStr:
+                subcommand.addVisits(newVisits=returnStr.split(';'))
+
             subcommand.setFinished()
 
         try:
             self.subcommands[id + 1].setActive()
         except IndexError:
             pass
-
-        self.mwindow.updateTable()
-
-    def addSubCommand(self, experimentId, exptype, name, comments, cmdList):
-
-        self.id = experimentId
-        self.type = exptype.capitalize()
-        self.name = name
-        self.comments = comments
-        self.subcommands = [SubCommand(id=i, cmdStr=cmdStr) for i, cmdStr in enumerate(cmdList.split(';'))]
-        self.buttonEye.setEnabled(True)
 
         self.mwindow.updateTable()
 

@@ -1,6 +1,40 @@
-from PyQt5.QtCore import Qt
+from functools import partial
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+
+from spsaitActor.logbook import Logbook
+
+class AnomaliesItem(QTableWidgetItem):
+    color = {"init": ("#FF7D7D", "#000000"), "valid": ("#7DFF7D", "#000000"), "active": ("#4A90D9", "#FFFFFF"),
+             "aborted": ("#88919a", "#FFFFFF"), "finished": ("#5f9d63", "#FFFFFF"), "failed": ("#9d5f5f", "#FFFFFF")}
+
+    def __init__(self, experiment, align=Qt.AlignCenter):
+        self.experiment = experiment
+        QTableWidgetItem.__init__(self, experiment.anomalies)
+
+        self.setTextAlignment(align)
+        if experiment.status in ["init", "valid", "active"] or not experiment.registered:
+            self.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+
+        back, col = AnomaliesItem.color[experiment.status]
+
+        self.setForeground(QColor(col))
+        self.setBackground(QColor(back))
+
+    def valueChanged(self):
+
+        anomalies = self.text()
+        setattr(self.experiment, "anomalies", str(anomalies))
+
+
+        try:
+            QTimer.singleShot(50, partial(Logbook.newAnomalies, self.experiment.id, anomalies))
+
+        except Exception as e:
+            print(e)
+
+        self.setText(anomalies)
 
 
 class CenteredItem(QTableWidgetItem):
@@ -88,7 +122,7 @@ class Table(QTableWidget):
                 self.setItem(rowNumber, 8, CenteredItem(experiment, 'cmdStr', str))
                 self.setItem(rowNumber, 9, CenteredItem(experiment, 'visitStart', int, lock=True))
                 self.setItem(rowNumber, 10, CenteredItem(experiment, 'visitEnd', int, lock=True))
-                self.setItem(rowNumber, 11, CenteredItem(experiment, 'anomalies', str))
+                self.setItem(rowNumber, 11, AnomaliesItem(experiment))
 
             for col in cols:
                 self.setSpan(rowNumber, col, span, 1)
