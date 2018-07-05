@@ -7,19 +7,19 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
-from mainwindow import ManagerWidget
+from panelwidget import PanelWidget
 
 
-class SequenceManager(QMainWindow):
+class SequencePanel(QMainWindow):
     def __init__(self, reactor, actor, d_width, d_height, cmdrName):
         QMainWindow.__init__(self)
         self.reactor = reactor
         self.actor = actor
         self.display = d_width, d_height
-        self.setName("%s.%s" % ("sequenceManager", cmdrName))
+        self.setName("%s.%s" % ("sequencePanel", cmdrName))
 
-        self.managerWidget = ManagerWidget(self)
-        self.setCentralWidget(self.managerWidget)
+        self.panelWidget = PanelWidget(self)
+        self.setCentralWidget(self.panelWidget)
 
         self.show()
 
@@ -56,7 +56,7 @@ def main():
     actor = miniActor.connectActor(['hub', 'spsait'])
 
     try:
-        ex = SequenceManager(reactor,
+        ex = SequencePanel(reactor,
                              actor,
                              geometry.width() * args.stretch,
                              geometry.height() * args.stretch,

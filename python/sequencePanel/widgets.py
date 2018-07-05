@@ -5,9 +5,9 @@ import os
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QTextCursor, QIcon, QPixmap
 from PyQt5.QtWidgets import QPlainTextEdit, QLabel, QComboBox, QLineEdit, QProgressBar, QPushButton
-import sequenceManager as seqman
+import sequencePanel
 
-imgpath = os.path.abspath(os.path.join(os.path.dirname(seqman.__file__), '../..', 'img'))
+imgpath = os.path.abspath(os.path.join(os.path.dirname(sequencePanel.__file__), '../..', 'img'))
 
 
 class Label(QLabel):

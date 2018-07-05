@@ -4,7 +4,7 @@ from functools import partial
 
 from PyQt5.QtWidgets import QCheckBox, QPushButton
 
-from sequenceManager.widgets import IconButton, EyeButton
+from sequencePanel.widgets import IconButton, EyeButton
 
 
 class SubCommand(object):

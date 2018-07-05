@@ -1,8 +1,8 @@
 __author__ = 'alefur'
 
 from PyQt5.QtWidgets import QGridLayout, QVBoxLayout, QLabel, QDialog, QDialogButtonBox
-from sequenceManager.experiment import ExperimentRow
-from sequenceManager.widgets import Label, LineEdit, ComboBox
+from sequencePanel.experiment import ExperimentRow
+from sequencePanel.widgets import Label, LineEdit, ComboBox
 
 
 class ExperimentLayout(QGridLayout):
@@ -54,9 +54,9 @@ class CommandLayout(ExperimentLayout):
 
 
 class Dialog(QDialog):
-    def __init__(self, mwindow):
-        QDialog.__init__(self, mwindow)
-        self.mwindow = mwindow
+    def __init__(self, panelwidget):
+        QDialog.__init__(self, panelwidget)
+        self.panelwidget = panelwidget
         self.availableSeq = dict(Command=CommandLayout,
                                  Experiment=ExperimentLayout)
 
@@ -105,5 +105,5 @@ class Dialog(QDialog):
         comments = self.seqLayout.comments.text()
         cmdStr = self.seqLayout.cmdStr.text()
 
-        experiment = ExperimentRow(self.mwindow, type=type, name=name, comments=comments, cmdStr=cmdStr)
-        self.mwindow.addExperiment(experiment=experiment)
+        experiment = ExperimentRow(self.panelwidget, type=type, name=name, comments=comments, cmdStr=cmdStr)
+        self.panelwidget.addExperiment(experiment=experiment)

@@ -4,14 +4,14 @@ import os
 import pickle
 
 from PyQt5.QtWidgets import QGridLayout, QWidget, QLineEdit, QAction, QMenuBar, QFileDialog
-from sequenceManager.dialog import Dialog
-from sequenceManager.sequencer import Sequencer
-from sequenceManager.table import Table
-from sequenceManager.widgets import LogArea
+from sequencePanel.dialog import Dialog
+from sequencePanel.sequencer import Sequencer
+from sequencePanel.table import Table
+from sequencePanel.widgets import LogArea
 
 
-class ManagerWidget(QWidget):
-    def __init__(self, manager):
+class PanelWidget(QWidget):
+    def __init__(self, mwindow):
         self.printLevels = {'D': 0, '>': 0,
                             'I': 1, ':': 1,
                             'W': 2,
@@ -20,7 +20,7 @@ class ManagerWidget(QWidget):
         self.experiments = []
 
         QWidget.__init__(self)
-        self.manager = manager
+        self.mwindow = mwindow
 
         self.mainLayout = QGridLayout()
         self.sequencer = Sequencer(self)
@@ -47,7 +47,7 @@ class ManagerWidget(QWidget):
 
     @property
     def actor(self):
-        return self.manager.actor
+        return self.mwindow.actor
 
     def addSequence(self):
         d = Dialog(self)
@@ -166,7 +166,7 @@ class ManagerWidget(QWidget):
             try:
                 self.pasteExperiment(ind=0, filepath=filepath)
             except:
-                self.manager.showError("Cannot load your file, it may be corrupted")
+                self.mwindow.showError("Cannot load your file, it may be corrupted")
 
     def saveFile(self):
         bpath = '/'.join(os.getcwd().split('/')[:3])

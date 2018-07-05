@@ -5,22 +5,22 @@ from datetime import timedelta
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QGridLayout, QPushButton, QSpinBox, QProgressBar
-from sequenceManager.widgets import CLabel, Label
+from sequencePanel.widgets import CLabel, Label
 
 
 class DelayBar(QProgressBar):
-    def __init__(self, mwindow):
-        self.mwindow = mwindow
+    def __init__(self, panelwidget):
+        self.panelwidget = panelwidget
         QProgressBar.__init__(self)
         self.setStyleSheet("QProgressBar { font: 8pt;}")
         self.setVisible(False)
-        self.progressing = QTimer(mwindow)
+        self.progressing = QTimer(panelwidget)
         self.progressing.setInterval(500)
         self.progressing.timeout.connect(self.waitInProgress)
 
     @property
     def sequencer(self):
-        return self.mwindow.sequencer
+        return self.panelwidget.sequencer
 
     @property
     def delta(self):
@@ -54,15 +54,15 @@ class DelayBar(QProgressBar):
 
 class Sequencer(QGridLayout):
     delayCmd = 2
-    def __init__(self, mwindow):
-        self.mwindow = mwindow
+    def __init__(self, panelwidget):
+        self.panelwidget = panelwidget
         QGridLayout.__init__(self)
         self.status = CLabel('OFF')
         self.startButton = QPushButton("START")
         self.stopButton = QPushButton("STOP")
         self.abortButton = QPushButton("ABORT")
 
-        self.delayBar = DelayBar(mwindow=mwindow)
+        self.delayBar = DelayBar(panelwidget=panelwidget)
         self.delayBar.setFixedSize(160, 28)
 
         self.delay = QSpinBox()
@@ -90,7 +90,7 @@ class Sequencer(QGridLayout):
 
     @property
     def validated(self):
-        return [experiment for experiment in self.mwindow.experiments if experiment.isValid]
+        return [experiment for experiment in self.panelwidget.experiments if experiment.isValid]
 
     def startSequence(self):
         self.startButton.setVisible(False)
@@ -131,4 +131,4 @@ class Sequencer(QGridLayout):
             self.startingSoon(delay=Sequencer.delayCmd)
 
     def abortSequence(self):
-        self.mwindow.sendCommand(fullCmd='spsait abort', timeLim=5)
+        self.panelwidget.sendCommand(fullCmd='spsait abort', timeLim=5)

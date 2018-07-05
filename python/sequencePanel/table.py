@@ -63,8 +63,8 @@ class CenteredItem(QTableWidgetItem):
 
 
 class Table(QTableWidget):
-    def __init__(self, mwindow):
-        self.mwindow = mwindow
+    def __init__(self, panelwidget):
+        self.panelwidget = panelwidget
         self.controlKey = False
 
         colnames = ['', '', '', ' Id ', '  Valid  ', '  Type  ', '  Name  ', '  Comments  ', ' CmdStr ',
@@ -141,7 +141,7 @@ class Table(QTableWidget):
 
     @property
     def experiments(self):
-        return self.mwindow.experiments
+        return self.panelwidget.experiments
 
     def getFont(self, size=10):
         font = self.font()
@@ -168,7 +168,7 @@ class Table(QTableWidget):
             if QKeyEvent.key() == Qt.Key_C and self.controlKey:
 
                 selectedExp = [item.experiment for item in self.selectedItems()]
-                self.mwindow.copyExperiment(selectedExp)
+                self.panelwidget.copyExperiment(selectedExp)
 
                 for range in self.selectedRanges():
                     self.setRangeSelected(range, False)
@@ -179,11 +179,11 @@ class Table(QTableWidget):
                 else:
                     ind = len(self.experiments)
 
-                self.mwindow.pasteExperiment(ind)
+                self.panelwidget.pasteExperiment(ind)
 
             if QKeyEvent.key() == Qt.Key_Delete:
                 selectedExp = [item.experiment for item in self.selectedItems()]
-                self.mwindow.removeExperiment(selectedExp)
+                self.panelwidget.removeExperiment(selectedExp)
 
         except KeyError:
             pass

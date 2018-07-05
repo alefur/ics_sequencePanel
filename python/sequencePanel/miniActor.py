@@ -26,8 +26,8 @@ class OurActor(actorcore.ICC.ICC):
 
 
 def connectActor(modelNames):
-    theActor = OurActor('sequencemanager',
-                        productName='sequenceManager',
+    theActor = OurActor('sequencepanel',
+                        productName='sequencePanel',
                         modelNames=modelNames,
                         logLevel=logging.DEBUG)
 
